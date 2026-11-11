@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0D1F1A">
+<title>501 Darts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDE5D3; --surface:#F8F3E8; --surface-2:#E3D9C3; --line:rgba(16,38,31,.14);
+  --ink:#10261F; --ink-dim:#5A6A62; --on-accent:#F8F3E8; --accent:#10261F;
+  --red:#D3262E; --green:#1E8F57; --b-black:#1A1C1B; --b-cream:#E8DCC0; --wire:#9AA19C;
+  --shadow:0 18px 40px -18px rgba(16,38,31,.35);
+  --display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",Impact,sans-serif;
+  --text:"Barlow","Segoe UI",system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1F1A; --surface:#132A23; --surface-2:#1A362D; --line:rgba(232,220,192,.12);
+    --ink:#EFE6D2; --ink-dim:#93A399; --on-accent:#0D1F1A; --accent:#EFE6D2;
+    --shadow:0 24px 50px -20px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1F1A; --surface:#132A23; --surface-2:#1A362D; --line:rgba(232,220,192,.12);
+  --ink:#EFE6D2; --ink-dim:#93A399; --on-accent:#0D1F1A; --accent:#EFE6D2;
+  --shadow:0 24px 50px -20px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--text);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible,.slot:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.app{max-width:480px;margin:0 auto;padding:12px 18px 28px;display:flex;flex-direction:column;gap:14px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;height:44px}
+.mark{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.mark i{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px var(--green)}
+.icons{display:flex;gap:4px}
+.ib{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--ink-dim)}
+.ib:hover{background:var(--surface)}
+.ib svg{width:22px;height:22px}
+.ib.off{opacity:.45}
+
+/* score */
+.score{display:grid;grid-template-columns:1fr auto;align-items:end;gap:8px}
+.remain{font-family:var(--display);font-weight:900;font-size:clamp(112px,38vw,168px);line-height:.8;letter-spacing:-.01em;font-variant-numeric:tabular-nums;transition:color .2s}
+.remain.bust{color:var(--red)}
+.remain.finish{color:var(--green)}
+.remain-label{font-size:14px;color:var(--ink-dim);margin-bottom:6px}
+.stats{display:flex;flex-direction:column;gap:10px;padding-bottom:6px;text-align:right}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--ink-dim)}
+
+/* checkout */
+.route{min-height:56px;border-radius:18px;background:var(--surface);display:flex;align-items:center;gap:10px;padding:8px 10px 8px 16px;border:1px solid var(--line)}
+.route .lbl{font-size:13px;color:var(--ink-dim);flex:1;line-height:1.25}
+.route .chips{display:flex;gap:6px}
+.chip{font-family:var(--display);font-weight:800;font-size:22px;min-width:52px;height:40px;padding:0 10px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2);font-variant-numeric:tabular-nums}
+.chip.next{background:var(--ink);color:var(--on-accent)}
+.chip.d{box-shadow:inset 0 -3px 0 var(--green)}
+.chip.t{box-shadow:inset 0 -3px 0 var(--red)}
+.route.none .lbl{color:var(--ink)}
+
+/* visit slots */
+.visit{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:8px;align-items:stretch}
+.slot{height:72px;border-radius:16px;border:1.5px dashed var(--line);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;position:relative}
+.slot .n{position:absolute;top:6px;left:9px;font-size:11px;color:var(--ink-dim)}
+.slot .c{font-family:var(--display);font-weight:800;font-size:28px;line-height:1}
+.slot .v{font-size:12px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.slot.filled{border:1.5px solid transparent;background:var(--surface);cursor:pointer}
+.slot.filled.t .c{color:var(--red)}
+.slot.filled.d .c{color:var(--green)}
+.slot.current{border-color:var(--ink);border-style:solid}
+.slot.pop{animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+.sum{min-width:64px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding-right:2px}
+.sum b{font-family:var(--display);font-weight:900;font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.sum span{font-size:12px;color:var(--ink-dim)}
+
+/* controls */
+.controls{display:flex;justify-content:space-between;align-items:center}
+.seg{display:flex;background:var(--surface);border-radius:12px;padding:3px;border:1px solid var(--line)}
+.seg button{height:34px;padding:0 14px;border-radius:9px;font-weight:600;font-size:14px;color:var(--ink-dim)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-accent)}
+.undo{height:40px;padding:0 12px;border-radius:12px;display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px;color:var(--ink-dim)}
+.undo svg{width:18px;height:18px}
+.undo:disabled{opacity:.35;cursor:default}
+
+/* board */
+.stage{position:relative;aspect-ratio:1/1;width:100%;border-radius:28px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.stage svg{width:100%;height:100%;display:block;touch-action:manipulation;cursor:crosshair}
+.seg-dark{fill:var(--b-black)} .seg-light{fill:var(--b-cream)}
+.r-red{fill:var(--red)} .r-green{fill:var(--green)}
+.wire{fill:none;stroke:var(--wire);stroke-width:.8;opacity:.7;pointer-events:none}
+.num{font-family:var(--display);font-weight:800;font-size:19px;fill:#EFE6D2;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.board-bg{fill:#101211}
+.target{stroke:#fff;stroke-width:2.5;animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{0%,100%{filter:brightness(1.1)}50%{filter:brightness(1.6)}}
+.mk circle{fill:#fff;stroke:var(--b-black);stroke-width:2}
+.mk text{font:700 9px var(--text);fill:var(--b-black);text-anchor:middle;dominant-baseline:central}
+.flash{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0}
+.flash .box{text-align:center;background:rgba(13,31,26,.82);color:#EFE6D2;padding:14px 26px 12px;border-radius:22px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.flash .fc{font-family:var(--display);font-weight:900;font-size:76px;line-height:.9}
+.flash .fv{font-size:15px;opacity:.75;margin-top:4px}
+.flash.show{animation:flash 1.1s ease-out forwards}
+.flash.t .fc{color:#FF5A5F} .flash.d .fc{color:#3DD68C}
+@keyframes flash{0%{opacity:0;transform:scale(.7)}15%{opacity:1;transform:scale(1.04)}25%{transform:scale(1)}75%{opacity:1}100%{opacity:0}}
+video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+.cam{position:absolute;inset:0;display:none}
+.cam.on{display:block}
+.cam-note{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(13,31,26,.85);color:#EFE6D2;font-size:14px;line-height:1.4;padding:12px 14px;border-radius:14px}
+.cam-note b{font-weight:600}
+.hint{font-size:13px;color:var(--ink-dim);text-align:center;margin:-4px 0 0}
+
+/* history */
+.history{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:28px}
+.history span.h{font-size:13px;color:var(--ink-dim);margin-right:4px}
+.hv{font-family:var(--display);font-weight:800;font-size:17px;padding:3px 9px;border-radius:8px;background:var(--surface);font-variant-numeric:tabular-nums}
+.hv.b{color:var(--red);text-decoration:line-through}
+.hv.hi{background:var(--ink);color:var(--on-accent)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(5,12,10,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.sheet.on{transform:none}
+.sheet .in{max-width:480px;margin:0 auto;background:var(--surface);border-radius:28px 28px 0 0;padding:10px 18px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 50px -20px rgba(0,0,0,.5)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.sh-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.sh-title{font-family:var(--display);font-weight:900;font-size:52px;line-height:.9}
+.sh-title.bust{color:var(--red)} .sh-title.finish{color:var(--green)}
+.sh-sub{font-size:14px;color:var(--ink-dim);margin-top:4px}
+.ring{position:relative;width:60px;height:60px;flex:none}
+.ring svg{width:60px;height:60px;transform:rotate(-90deg)}
+.ring .track{fill:none;stroke:var(--line);stroke-width:5}
+.ring .bar{fill:none;stroke:var(--ink);stroke-width:5;stroke-linecap:round}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:24px;font-variant-numeric:tabular-nums}
+.ring.paused .bar{stroke:var(--ink-dim)}
+.sh-darts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sh-darts .slot{background:var(--surface-2);border:1.5px solid transparent;cursor:pointer;height:78px}
+.sh-darts .slot.editing{border-color:var(--ink)}
+.sh-help{font-size:13px;color:var(--ink-dim);text-align:center;margin:10px 0 12px}
+.primary{width:100%;height:56px;border-radius:16px;background:var(--ink);color:var(--on-accent);font-weight:700;font-size:17px}
+.secondary{width:100%;height:48px;border-radius:14px;background:var(--surface-2);font-weight:600;font-size:15px;margin-top:8px}
+
+/* keypad */
+.keypad{display:none;margin-top:4px}
+.keypad.on{display:block}
+.mult{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.mult button{height:42px;border-radius:12px;background:var(--surface-2);font-weight:700;font-size:15px}
+.mult button[aria-pressed="true"]{background:var(--ink);color:var(--on-accent)}
+.mult button[data-m="2"][aria-pressed="true"]{background:var(--green);color:#fff}
+.mult button[data-m="3"][aria-pressed="true"]{background:var(--red);color:#fff}
+.nums{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.nums button{height:48px;border-radius:12px;background:var(--bg);font-family:var(--display);font-weight:800;font-size:22px}
+.nums button:active{background:var(--ink);color:var(--on-accent)}
+.extra{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.extra button{height:48px;border-radius:12px;background:var(--bg);font-weight:700;font-size:15px}
+
+/* settings */
+.set-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);gap:12px}
+.set-row:last-of-type{border-bottom:0}
+.set-row label{font-weight:600}
+.set-row small{display:block;color:var(--ink-dim);font-weight:400;font-size:13px;margin-top:2px}
+
+/* win */
+.win{position:fixed;inset:0;z-index:30;background:var(--bg);display:none;flex-direction:column;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px))}
+.win.on{display:flex}
+.win .w{max-width:420px;margin:0 auto;width:100%}
+.win h2{font-family:var(--display);font-weight:900;font-size:clamp(84px,26vw,120px);line-height:.85;margin:0 0 6px;color:var(--green)}
+.win p{color:var(--ink-dim);margin:0 0 28px;font-size:17px}
+.win-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px}
+.win-grid div{background:var(--surface);border-radius:18px;padding:16px}
+.win-grid b{display:block;font-family:var(--display);font-weight:900;font-size:40px;line-height:1}
+.win-grid span{font-size:13px;color:var(--ink-dim)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .flash.show{animation:none;opacity:1}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="mark"><i aria-hidden="true"></i>501</div>
+    <div class="icons">
+      <button class="ib" id="voiceBtn" aria-label="Omroeper aan of uit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path id="waves" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+      </button>
+      <button class="ib" id="setBtn" aria-label="Instellingen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="score">
+    <div>
+      <div class="remain-label" id="remainLabel">Resterend</div>
+      <div class="remain" id="remain">501</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="avg">0.0</b><span>3-dart gem.</span></div>
+      <div class="stat"><b id="darts">0</b><span>pijlen</span></div>
+    </div>
+  </section>
+
+  <div class="route" id="route" aria-live="polite"></div>
+
+  <section class="visit" id="visit"></section>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Weergave">
+      <button id="viewBoard" aria-pressed="true">Bord</button>
+      <button id="viewCam" aria-pressed="false">Camera</button>
+    </div>
+    <button class="undo" id="undo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+      Ongedaan
+    </button>
+  </div>
+
+  <div class="stage" id="stage">
+    <svg id="board" viewBox="-200 -200 400 400" aria-label="Dartbord, tik om een worp in te voeren"></svg>
+    <div class="cam" id="cam">
+      <video id="video" playsinline muted autoplay></video>
+      <div class="cam-note" id="camNote"><b>Camera-preview.</b> Automatische herkenning komt in de volgende stap. Scoor nu via de knop Bord.</div>
+    </div>
+    <div class="flash" id="flash"><div class="box"><div class="fc" id="fc">T20</div><div class="fv" id="fv">60 punten</div></div></div>
+  </div>
+  <p class="hint" id="hint">Tik op het bord om een worp in te voeren. Buiten de dubbelring telt als mis.</p>
+
+  <div class="history" id="history"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="in">
+    <div class="grab"></div>
+    <div class="sh-head">
+      <div>
+        <div class="sh-title" id="shTitle">140</div>
+        <div class="sh-sub" id="shSub">Nog 361 over</div>
+      </div>
+      <div class="ring" id="ring">
+        <svg viewBox="0 0 60 60"><circle class="track" cx="30" cy="30" r="26"/><circle class="bar" id="ringBar" cx="30" cy="30" r="26" stroke-dasharray="163.36" stroke-dashoffset="0"/></svg>
+        <b id="ringNum">7</b>
+      </div>
+    </div>
+    <div class="sh-darts" id="shDarts"></div>
+    <p class="sh-help" id="shHelp">Klopt iets niet? Tik op de pijl om te corrigeren.</p>
+    <div class="keypad" id="keypad">
+      <div class="mult" role="group" aria-label="Ring">
+        <button data-m="1" aria-pressed="true">Single</button>
+        <button data-m="2" aria-pressed="false">Dubbel</button>
+        <button data-m="3" aria-pressed="false">Triple</button>
+      </div>
+      <div class="nums" id="nums"></div>
+      <div class="extra">
+        <button data-x="25">25</button>
+        <button data-x="50">Bull</button>
+        <button data-x="0">Mis</button>
+      </div>
+      <button class="secondary" id="cancelEdit">Annuleren</button>
+    </div>
+    <button class="primary" id="confirm">Klopt</button>
+  </div>
+</div>
+
+<div class="sheet" id="settings" role="dialog" aria-modal="true" aria-label="Instellingen">
+  <div class="in">
+    <div class="grab"></div>
+    <div class="set-row"><label>Omroeper<small>Roept de beurtscore om na 3 pijlen</small></label>
+      <div class="seg"><button data-voice="1">Aan</button><button data-voice="0">Uit</button></div></div>
+    <div class="set-row"><label>Taal omroeper<small>Engels klinkt als op tv</small></label>
+      <div class="seg"><button data-lang="nl">NL</button><button data-lang="en">EN</button></div></div>
+    <div class="set-row"><label>Correctietijd<small>Daarna wordt de beurt vanzelf bevestigd</small></label>
+      <div class="seg"><button data-t="5">5s</button><button data-t="7">7s</button><button data-t="10">10s</button></div></div>
+    <button class="secondary" id="newLeg">Nieuwe leg starten</button>
+    <button class="primary" id="closeSet" style="margin-top:8px">Sluiten</button>
+  </div>
+</div>
+
+<div class="win" id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+  <div class="w">
+    <h2 id="winTitle">Game shot</h2>
+    <p id="winSub">Uitgegooid op D20</p>
+    <div class="win-grid">
+      <div><b id="wDarts">0</b><span>pijlen</span></div>
+      <div><b id="wAvg">0</b><span>3-dart gemiddelde</span></div>
+      <div><b id="wOut">0</b><span>finish</span></div>
+      <div><b id="wHigh">0</b><span>hoogste beurt</span></div>
+    </div>
+    <button class="primary" id="again">Nieuwe leg</button>
+  </div>
+</div>
+
+<script>
+(() => {
+const ORDER = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const $ = id => document.getElementById(id);
+
+/* ---------- darts ---------- */
+function mk(mult, num){
+  if (num === 0) return {code:'MIS', mult:0, num:0, value:0};
+  if (num === 25) return mult === 2 ? {code:'BULL', mult:2, num:25, value:50} : {code:'25', mult:1, num:25, value:25};
+  return {code:(mult===3?'T':mult===2?'D':'') + num, mult, num, value:mult*num};
+}
+const kind = d => d.mult===3 ? 't' : d.mult===2 ? 'd' : '';
+
+/* ---------- checkout table ---------- */
+const SEGS = [];
+for (let n=1;n<=20;n++) for (let m=1;m<=3;m++) SEGS.push(mk(m,n));
+SEGS.push(mk(1,25), mk(2,25));
+const DBLS = SEGS.filter(s => s.mult===2);
+const DRANK = {20:0,16:1,8:2,18:3,12:4,10:5,4:6,14:7,6:8,2:9,25:10};
+const dRank = d => d.num in DRANK ? DRANK[d.num] : (d.num===1 ? 16 : 11);
+const setupCost = s => s.mult===1 ? (s.num===25 ? 3 : (s.num===1 ? 1.5 : .2)) : s.mult===3 ? 1 + (20-s.num)*.02 : (s.num===25 ? 6 : 5);
+const EXACT = [null, {}, {}, {}];
+const put = (k, s, route, cost) => { if (!EXACT[k][s] || EXACT[k][s].cost > cost) EXACT[k][s] = {route, cost}; };
+for (const d of DBLS) put(1, d.value, [d], 100 + dRank(d));
+for (const a of SEGS) for (const d of DBLS){ const s=a.value+d.value; if (s<=170) put(2, s, [a,d], 200 + dRank(d) + setupCost(a)); }
+for (let i=0;i<SEGS.length;i++) for (let j=i;j<SEGS.length;j++) for (const d of DBLS){
+  const a=SEGS[i], b=SEGS[j], s=a.value+b.value+d.value;
+  if (s>170) continue;
+  const pair = a.value>=b.value ? [a,b] : [b,a];
+  put(3, s, [...pair, d], 300 + dRank(d) + setupCost(a) + setupCost(b));
+}
+function checkout(score, dartsLeft){
+  let best = null;
+  for (let k=1;k<=dartsLeft;k++){ const e=EXACT[k][score]; if (e && (!best || e.cost<best.cost)) best=e; }
+  return best ? best.route : null;
+}
+
+/* ---------- state ---------- */
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem('dart501') || '{}'); } catch(e){ return {}; } },
+  set(v){ try { localStorage.setItem('dart501', JSON.stringify(v)); } catch(e){} }
+};
+const saved = store.get();
+const S = {
+  remaining:501, visits:[], current:[], phase:'throw', edit:null, mult:1,
+  voice: saved.voice ?? true, lang: saved.lang ?? 'nl', timer: saved.timer ?? 7, view:'board'
+};
+const saveSettings = () => store.set({voice:S.voice, lang:S.lang, timer:S.timer});
+
+function evalVisit(start, darts){
+  let r = start, total = 0;
+  for (let i=0;i<darts.length;i++){
+    const d = darts[i], r2 = r - d.value;
+    if (r2 < 0 || r2 === 1 || (r2 === 0 && d.mult !== 2)) return {status:'bust', remaining:start, used:i+1, total:0, raw: total + d.value};
+    r = r2; total += d.value;
+    if (r === 0) return {status:'finish', remaining:0, used:i+1, total, raw:total};
+  }
+  return {status:'open', remaining:r, used:darts.length, total, raw:total};
+}
+const dartsThrown = () => S.visits.reduce((n,v)=>n+v.darts.length,0);
+const average = () => { const n=dartsThrown(); return n ? (501 - S.remaining)/n*3 : 0; };
+
+/* ---------- voice ---------- */
+let voices = [];
+const loadVoices = () => { if ('speechSynthesis' in window) voices = speechSynthesis.getVoices(); };
+loadVoices(); if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = loadVoices;
+function say(text, pitch=1){
+  if (!S.voice || !('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = S.lang==='nl' ? 'nl-NL' : 'en-GB';
+  const v = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(S.lang==='nl'?'nl':'en-gb')) || voices.find(v => v.lang && v.lang.toLowerCase().startsWith(S.lang));
+  if (v) u.voice = v;
+  u.rate = 1.02; u.pitch = pitch;
+  speechSynthesis.speak(u);
+}
+function callDart(d){
+  const nl = S.lang==='nl';
+  if (d.code==='MIS') return say(nl ? 'mis' : 'no score');
+  if (d.code==='BULL') return say(nl ? 'bull' : 'bullseye');
+  if (d.code==='25') return say('25');
+  if (d.mult===3) return say((nl?'triple ':'treble ') + d.num);
+  if (d.mult===2) return say((nl?'dubbel ':'double ') + d.num);
+  say(String(d.num));
+}
+function callVisit(ev){
+  const nl = S.lang==='nl';
+  if (ev.status==='bust') return say(nl ? 'Bust!' : 'Bust!', .95);
+  if (ev.status==='finish') return say(nl ? 'Game shot!' : 'Game shot, and the leg!', 1.05);
+  if (ev.total===0) return say(nl ? 'Geen score' : 'No score');
+  if (ev.total===180) return say(nl ? 'Honderdtachtig!' : 'One hundred and eighty!', 1.15);
+  say(String(ev.total), ev.total>=100 ? 1.08 : 1);
+}
+
+/* ---------- board ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const R = {bull:6.35, obull:15.9, tIn:99, tOut:107, dIn:162, dOut:170};
+const pt = (r,a) => [r*Math.sin(a*Math.PI/180), -r*Math.cos(a*Math.PI/180)];
+function arc(r1,r2,a1,a2){
+  const [x1,y1]=pt(r2,a1),[x2,y2]=pt(r2,a2),[x3,y3]=pt(r1,a2),[x4,y4]=pt(r1,a1);
+  return `M${x1} ${y1}A${r2} ${r2} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${r1} ${r1} 0 0 0 ${x4} ${y4}Z`;
+}
+const board = $('board');
+function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for (const k in attrs) e.setAttribute(k,attrs[k]); (parent||board).appendChild(e); return e; }
+el('circle',{cx:0,cy:0,r:200,class:'board-bg'});
+ORDER.forEach((n,i) => {
+  const a1=i*18-9, a2=i*18+9, even=i%2===0;
+  el('path',{d:arc(R.dIn,R.dOut,a1,a2), class:even?'r-red':'r-green', 'data-code':'D'+n});
+  el('path',{d:arc(R.tOut,R.dIn,a1,a2), class:even?'seg-dark':'seg-light', 'data-code':String(n)});
+  el('path',{d:arc(R.tIn,R.tOut,a1,a2), class:even?'r-red':'r-green', 'data-code':'T'+n});
+  el('path',{d:arc(R.obull,R.tIn,a1,a2), class:even?'seg-dark':'seg-light', 'data-code':String(n)});
+  const [tx,ty]=pt(186,i*18);
+  const t=el('text',{x:tx,y:ty,class:'num'}); t.textContent=n;
+});
+el('circle',{cx:0,cy:0,r:R.obull,class:'r-green','data-code':'25'});
+el('circle',{cx:0,cy:0,r:R.bull,class:'r-red','data-code':'BULL'});
+[R.dOut,R.dIn,R.tOut,R.tIn,R.obull,R.bull].forEach(r=>el('circle',{cx:0,cy:0,r,class:'wire'}));
+ORDER.forEach((n,i)=>{ const [x1,y1]=pt(R.obull,i*18-9),[x2,y2]=pt(R.dOut,i*18-9); el('line',{x1,y1,x2,y2,class:'wire'}); });
+const markers = el('g',{});
+
+function hitAt(x,y){
+  const r = Math.hypot(x,y);
+  if (r > R.dOut) return mk(0,0);
+  if (r <= R.bull) return mk(2,25);
+  if (r <= R.obull) return mk(1,25);
+  const ang = (Math.atan2(x,-y)*180/Math.PI + 360 + 9) % 360;
+  const n = ORDER[Math.floor(ang/18)];
+  if (r >= R.dIn) return mk(2,n);
+  if (r >= R.tIn && r <= R.tOut) return mk(3,n);
+  return mk(1,n);
+}
+function centerOf(d){
+  if (d.code==='MIS') return null;
+  if (d.code==='BULL') return [0,0];
+  if (d.code==='25') return [0,-11];
+  const i = ORDER.indexOf(d.num), r = d.mult===3 ? 103 : d.mult===2 ? 166 : 135;
+  return pt(r, i*18);
+}
+board.addEventListener('click', e => {
+  if (S.phase!=='throw' || S.edit) return;
+  const p = board.createSVGPoint(); p.x=e.clientX; p.y=e.clientY;
+  const q = p.matrixTransform(board.getScreenCTM().inverse());
+  const d = hitAt(q.x,q.y); d.x=q.x; d.y=q.y;
+  addDart(d);
+});
+
+/* ---------- flow ---------- */
+function addDart(d){
+  if (S.phase!=='throw' || S.current.length>=3) return;
+  S.current.push(d);
+  flash(d);
+  const ev = evalVisit(S.remaining, S.current);
+  render(true);
+  if (ev.status!=='open' || S.current.length===3) setTimeout(()=>enterReview(ev), 650);
+}
+function enterReview(ev){
+  ev = ev || evalVisit(S.remaining, S.current);
+  S.phase='review'; S.edit=null;
+  callVisit(ev);
+  render(); openSheet(); startTimer();
+}
+function commit(){
+  stopTimer();
+  const ev = evalVisit(S.remaining, S.current);
+  S.visits.push({darts:S.current.slice(), total:ev.status==='bust'?0:ev.total, bust:ev.status==='bust'});
+  S.remaining = ev.remaining;
+  S.current = []; S.edit=null;
+  closeSheet();
+  if (ev.status==='finish'){ S.phase='won'; showWin(); render(); return; }
+  S.phase='throw';
+  render();
+  if (S.remaining<=170 && checkout(S.remaining,3)) setTimeout(()=>say(S.lang==='nl' ? `Je hebt ${S.remaining} nodig` : `You require ${S.remaining}`), 450);
+}
+function undo(){
+  if (S.phase==='review'){ stopTimer(); S.current.pop(); S.phase='throw'; closeSheet(); render(); return; }
+  if (S.phase!=='throw') return;
+  if (S.current.length){ S.current.pop(); render(); return; }
+  const v = S.visits.pop(); if (!v) return;
+  if (!v.bust) S.remaining += v.total;
+  S.current = v.darts.slice(0,-1);
+  render();
+}
+function newLeg(){
+  stopTimer();
+  Object.assign(S,{remaining:501, visits:[], current:[], phase:'throw', edit:null});
+  $('win').classList.remove('on'); closeSheet(); closeSettings(); render();
+}
+
+/* ---------- edit ---------- */
+function openEdit(i){
+  if (!S.current[i]) return;
+  stopTimer();
+  S.edit = {idx:i};
+  const d = S.current[i];
+  setMult(d.mult>=1 && d.num!==25 ? d.mult : 1);
+  if (S.phase==='throw') openSheet();
+  renderSheet();
+}
+function applyEdit(d){
+  const i = S.edit.idx;
+  const old = S.current[i]; if (old && old.code===d.code){ d.x=old.x; d.y=old.y; }
+  S.current[i] = d;
+  S.edit = null;
+  const ev = evalVisit(S.remaining, S.current);
+  if (ev.status!=='open') S.current = S.current.slice(0, ev.used);
+  render();
+  if (ev.status!=='open' || S.current.length===3){ S.phase='review'; callVisit(ev); renderSheet(); openSheet(); startTimer(); }
+  else { S.phase='throw'; closeSheet(); }
+}
+function cancelEdit(){
+  S.edit=null;
+  if (S.phase==='review'){ renderSheet(); startTimer(); } else closeSheet();
+}
+function setMult(m){
+  S.mult = m;
+  document.querySelectorAll('.mult button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.m===m)));
+}
+const nums = $('nums');
+for (let n=1;n<=20;n++){ const b=document.createElement('button'); b.textContent=n; b.onclick=()=>applyEdit(mk(S.mult,n)); nums.appendChild(b); }
+document.querySelectorAll('.mult button').forEach(b=>b.onclick=()=>setMult(+b.dataset.m));
+document.querySelectorAll('.extra button').forEach(b=>b.onclick=()=>{ const x=+b.dataset.x; applyEdit(x===50?mk(2,25):x===25?mk(1,25):mk(0,0)); });
+
+/* ---------- timer ---------- */
+let tEnd=0, raf=0;
+const CIRC = 163.36;
+function startTimer(){
+  stopTimer();
+  tEnd = performance.now() + S.timer*1000;
+  $('ring').classList.remove('paused');
+  const tick = now => {
+    const left = Math.max(0, tEnd-now), f = left/(S.timer*1000);
+    $('ringBar').setAttribute('stroke-dashoffset', String(CIRC*(1-f)));
+    $('ringNum').textContent = Math.ceil(left/1000);
+    if (left<=0){ raf=0; commit(); return; }
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+}
+function stopTimer(){ if (raf) cancelAnimationFrame(raf); raf=0; $('ring').classList.add('paused'); }
+
+/* ---------- sheets ---------- */
+function openSheet(){ $('sheet').classList.add('on'); $('scrim').classList.add('on'); renderSheet(); }
+function closeSheet(){ $('sheet').classList.remove('on'); if (!$('settings').classList.contains('on')) $('scrim').classList.remove('on'); }
+function openSettings(){ syncSettings(); $('settings').classList.add('on'); $('scrim').classList.add('on'); }
+function closeSettings(){ $('settings').classList.remove('on'); if (!$('sheet').classList.contains('on')) $('scrim').classList.remove('on'); }
+function syncSettings(){
+  document.querySelectorAll('[data-voice]').forEach(b=>b.setAttribute('aria-pressed', String((b.dataset.voice==='1')===S.voice)));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.lang===S.lang)));
+  document.querySelectorAll('[data-t]').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.t===S.timer)));
+  $('voiceBtn').classList.toggle('off', !S.voice);
+  $('waves').style.display = S.voice ? '' : 'none';
+}
+
+function slotHTML(d, i, extra=''){
+  if (!d) return `<div class="slot ${extra}"><span class="n">${i+1}</span><span class="c" style="opacity:.25">–</span></div>`;
+  const label = d.code==='MIS' ? 'Mis' : d.code==='BULL' ? 'Bull' : d.code;
+  return `<button class="slot filled ${kind(d)} ${extra}" data-i="${i}" aria-label="Pijl ${i+1}: ${label}, ${d.value} punten. Tik om te corrigeren"><span class="n">${i+1}</span><span class="c">${label}</span><span class="v">${d.value}</span></button>`;
+}
+
+function renderSheet(){
+  const ev = evalVisit(S.remaining, S.current);
+  const t = $('shTitle');
+  t.className = 'sh-title' + (ev.status==='bust' ? ' bust' : ev.status==='finish' ? ' finish' : '');
+  if (S.edit && S.phase==='throw'){
+    t.textContent = `Pijl ${S.edit.idx+1}`; $('shSub').textContent = 'Kies wat er echt gegooid is';
+  } else if (ev.status==='bust'){
+    t.textContent = 'Bust'; $('shSub').textContent = `${ev.raw} gegooid. Je blijft op ${S.remaining}`;
+  } else if (ev.status==='finish'){
+    t.textContent = 'Game shot'; $('shSub').textContent = `Uitgegooid met ${ev.total}`;
+  } else {
+    t.textContent = ev.total; $('shSub').textContent = `Nog ${ev.remaining} over`;
+  }
+  $('ring').style.visibility = (S.phase==='review' && !S.edit) ? 'visible' : 'hidden';
+  $('shDarts').innerHTML = [0,1,2].map(i=>slotHTML(S.current[i], i, S.edit && S.edit.idx===i ? 'editing' : '')).join('');
+  $('shDarts').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>openEdit(+b.dataset.i));
+  $('keypad').classList.toggle('on', !!S.edit);
+  $('confirm').style.display = S.edit ? 'none' : '';
+  $('shHelp').textContent = S.edit ? 'Kies de ring en het getal.' : 'Klopt iets niet? Tik op de pijl om te corrigeren.';
+}
+
+/* ---------- main render ---------- */
+let lastCount = 0;
+function render(animate){
+  const ev = evalVisit(S.remaining, S.current);
+  const live = ev.status==='bust' ? S.remaining : ev.remaining;
+  const rem = $('remain');
+  rem.textContent = live;
+  rem.className = 'remain' + (ev.status==='bust' ? ' bust' : ev.status==='finish' ? ' finish' : '');
+  $('remainLabel').textContent = ev.status==='bust' ? 'Bust, score telt niet' : 'Resterend';
+  const n = dartsThrown() + (S.phase==='won' ? 0 : 0);
+  $('darts').textContent = n + S.current.length;
+  $('avg').textContent = average().toFixed(1);
+
+  // route
+  const route = $('route');
+  const left = S.phase==='review' ? 3 : 3 - S.current.length;
+  const base = S.phase==='review' ? (ev.status==='bust' ? S.remaining : ev.remaining) : live;
+  let target = null;
+  route.className = 'route';
+  if (ev.status==='finish'){ route.innerHTML = `<span class="lbl">Uitgegooid</span>`; }
+  else if (ev.status==='bust'){ route.className='route none'; route.innerHTML = `<span class="lbl">Bust. Volgende beurt weer vanaf ${S.remaining}.</span>`; }
+  else if (base > 170){ route.innerHTML = `<span class="lbl">Finishroute verschijnt vanaf 170</span>`; }
+  else {
+    const r = checkout(base, left);
+    if (r){
+      target = r[0].code;
+      const lbl = S.phase==='review' ? 'Volgende beurt' : (left===3 ? 'Uitgooien' : `Nog ${left} ${left===1?'pijl':'pijlen'}`);
+      route.innerHTML = `<span class="lbl">${lbl}<br>${base}</span><div class="chips">${r.map((d,i)=>`<span class="chip ${kind(d)} ${i===0?'next':''}">${d.code==='BULL'?'Bull':d.code}</span>`).join('')}</div>`;
+    } else {
+      route.className='route none';
+      const anyLater = checkout(base,3);
+      route.innerHTML = `<span class="lbl">Geen finish met ${left} ${left===1?'pijl':'pijlen'}. ${anyLater ? 'Zet een goede dubbel klaar.' : `${base} is niet in 3 pijlen uit te gooien.`}</span>`;
+    }
+  }
+
+  // slots
+  const curIdx = S.phase==='throw' && ev.status==='open' ? S.current.length : -1;
+  $('visit').innerHTML = [0,1,2].map(i => slotHTML(S.current[i], i, (i===curIdx?'current ':'') + (animate && i===S.current.length-1 ? 'pop':''))).join('')
+    + `<div class="sum"><b>${ev.status==='bust' ? 0 : ev.total}</b><span>deze beurt</span></div>`;
+  $('visit').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>openEdit(+b.dataset.i));
+
+  // board target + markers
+  board.querySelectorAll('.target').forEach(p=>p.classList.remove('target'));
+  if (target && S.phase==='throw') board.querySelectorAll(`[data-code="${target}"]`).forEach(p=>{ p.classList.add('target'); p.parentNode.insertBefore(p, markers); });
+  markers.innerHTML = '';
+  S.current.forEach((d,i)=>{
+    const c = d.x!==undefined ? [d.x,d.y] : centerOf(d); if (!c) return;
+    const g = el('g',{class:'mk'},markers);
+    el('circle',{cx:c[0],cy:c[1],r:7},g);
+    const t = el('text',{x:c[0],y:c[1]},g); t.textContent = i+1;
+  });
+
+  // history
+  const vs = S.visits.slice(-8);
+  const high = Math.max(0, ...S.visits.map(v=>v.total));
+  $('history').innerHTML = vs.length ? `<span class="h">Beurten</span>` + vs.map(v=>`<span class="hv ${v.bust?'b':''} ${!v.bust && v.total===high && high>=100 ?'hi':''}">${v.bust ? v.darts.reduce((s,d)=>s+d.value,0) : v.total}</span>`).join('') : '';
+
+  $('undo').disabled = !(S.current.length || S.visits.length) || S.phase==='won';
+  lastCount = S.current.length;
+}
+
+function flash(d){
+  const f = $('flash');
+  $('fc').textContent = d.code==='MIS' ? 'Mis' : d.code==='BULL' ? 'Bull' : d.code;
+  $('fv').textContent = d.value + (d.value===1 ? ' punt' : ' punten');
+  f.className = 'flash ' + kind(d);
+  void f.offsetWidth;
+  f.classList.add('show');
+}
+
+function showWin(){
+  const last = S.visits[S.visits.length-1];
+  const lastDart = last.darts[last.darts.length-1];
+  $('winSub').textContent = `Uitgegooid op ${lastDart.code==='BULL'?'Bull':lastDart.code} in ${dartsThrown()} pijlen`;
+  $('wDarts').textContent = dartsThrown();
+  $('wAvg').textContent = average().toFixed(1);
+  $('wOut').textContent = last.total;
+  $('wHigh').textContent = Math.max(...S.visits.map(v=>v.total));
+  $('win').classList.add('on');
+}
+
+/* ---------- camera ---------- */
+let stream = null;
+async function setView(v){
+  S.view = v;
+  $('viewBoard').setAttribute('aria-pressed', String(v==='board'));
+  $('viewCam').setAttribute('aria-pressed', String(v==='cam'));
+  $('cam').classList.toggle('on', v==='cam');
+  $('hint').textContent = v==='cam' ? 'Hang je telefoon schuin naast het bord, met het hele bord in beeld.' : 'Tik op het bord om een worp in te voeren. Buiten de dubbelring telt als mis.';
+  if (v==='cam' && !stream){
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1280}}, audio:false});
+      $('video').srcObject = stream;
+    } catch(e){
+      $('camNote').innerHTML = '<b>Camera niet beschikbaar.</b> Deze weergave blokkeert de camera of je hebt geen toestemming gegeven. Open de app via een eigen https-link om de camera te gebruiken.';
+    }
+  }
+}
+$('viewBoard').onclick = ()=>setView('board');
+$('viewCam').onclick = ()=>setView('cam');
+
+/* ---------- wiring ---------- */
+$('undo').onclick = undo;
+$('confirm').onclick = commit;
+$('cancelEdit').onclick = cancelEdit;
+$('again').onclick = newLeg;
+$('newLeg').onclick = newLeg;
+$('setBtn').onclick = openSettings;
+$('closeSet').onclick = closeSettings;
+$('scrim').onclick = () => { if ($('settings').classList.contains('on')) closeSettings(); };
+$('voiceBtn').onclick = () => { S.voice=!S.voice; saveSettings(); syncSettings(); if (S.voice) say(S.lang==='nl'?'Omroeper aan':'Caller on'); };
+document.querySelectorAll('[data-voice]').forEach(b=>b.onclick=()=>{ S.voice=b.dataset.voice==='1'; saveSettings(); syncSettings(); });
+document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{ S.lang=b.dataset.lang; saveSettings(); syncSettings(); say(S.lang==='nl'?'Honderd':'One hundred'); });
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ S.timer=+b.dataset.t; saveSettings(); syncSettings(); });
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape'){ if (S.edit) cancelEdit(); else closeSettings(); }
+  if (e.key==='Enter' && S.phase==='review' && !S.edit) commit();
+});
+
+syncSettings();
+render();
+})();
+</script>
+</body>
+</html>
